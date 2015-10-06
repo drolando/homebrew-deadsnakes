@@ -1,16 +1,31 @@
 # Force OS X.
 language: objective-c
+
 matrix:
   include:
-    - env: OSX=10.11
+    - env: OSX=10.11 PYTHONVERSION=python33
       os: osx
       osx_image: osx10.11
       rvm: system
-    - env: OSX=10.10
+    - env: OSX=10.11 PYTHONVERSION=python34
+      os: osx
+      osx_image: osx10.11
+      rvm: system
+
+    - env: OSX=10.10 PYTHONVERSION=python33
       os: osx
       osx_image: xcode7
       rvm: system
-    - env: OSX=10.9
+    - env: OSX=10.10 PYTHONVERSION=python34
+      os: osx
+      osx_image: xcode7
+      rvm: system
+
+    - env: OSX=10.9 PYTHONVERSION=python33
+      os: osx
+      osx_image: beta-xcode6.2
+      rvm: system
+    - env: OSX=10.9 PYTHONVERSION=python34
       os: osx
       osx_image: beta-xcode6.2
       rvm: system
@@ -20,10 +35,10 @@ before_install:
     - brew tap drolando/deadsnakes
 
 install:
-  - brew install python33
+  - brew install $PYTHONVERSION
 
 script:
-  - brew test python33
+  - brew test $PYTHONVERSION
 
 notifications:
   email: false
