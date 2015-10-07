@@ -3,53 +3,15 @@ language: objective-c
 
 matrix:
   include:
-    - env: OSX=10.11 PYTHONVERSION=python31
+    - env: OSX=10.11
       os: osx
       osx_image: osx10.11
       rvm: system
-    - env: OSX=10.11 PYTHONVERSION=python32
-      os: osx
-      osx_image: osx10.11
-      rvm: system
-    - env: OSX=10.11 PYTHONVERSION=python33
-      os: osx
-      osx_image: osx10.11
-      rvm: system
-    - env: OSX=10.11 PYTHONVERSION=python34
-      os: osx
-      osx_image: osx10.11
-      rvm: system
-
-    - env: OSX=10.10 PYTHONVERSION=python31
+    - env: OSX=10.10
       os: osx
       osx_image: xcode7
       rvm: system
-    - env: OSX=10.10 PYTHONVERSION=python32
-      os: osx
-      osx_image: xcode7
-      rvm: system
-    - env: OSX=10.10 PYTHONVERSION=python33
-      os: osx
-      osx_image: xcode7
-      rvm: system
-    - env: OSX=10.10 PYTHONVERSION=python34
-      os: osx
-      osx_image: xcode7
-      rvm: system
-
-    - env: OSX=10.9 PYTHONVERSION=python31
-      os: osx
-      osx_image: beta-xcode6.2
-      rvm: system
-    - env: OSX=10.9 PYTHONVERSION=python32
-      os: osx
-      osx_image: beta-xcode6.2
-      rvm: system
-    - env: OSX=10.9 PYTHONVERSION=python33
-      os: osx
-      osx_image: beta-xcode6.2
-      rvm: system
-    - env: OSX=10.9 PYTHONVERSION=python34
+    - env: OSX=10.9
       os: osx
       osx_image: beta-xcode6.2
       rvm: system
@@ -59,10 +21,16 @@ before_install:
     - brew tap drolando/deadsnakes
 
 install:
-  - brew install $PYTHONVERSION
+    - brew install python31
+    - brew install python32
+    - brew install python33
+    - brew install python34
 
 script:
-  - brew test $PYTHONVERSION
+    - brew test python31
+    - brew test python32
+    - brew test python33
+    - brew test python34
 
 notifications:
   email: false
