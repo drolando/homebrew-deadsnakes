@@ -31,6 +31,3 @@ script:
     - brew test python32
     - brew test python33
     - brew test python34
-
-notifications:
-  email: false
