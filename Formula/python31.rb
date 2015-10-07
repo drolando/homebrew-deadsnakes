@@ -31,9 +31,10 @@ class Python31 < Formula
     sha256 "8c4ab0c4f227730519dc1e020f875b3ef97e643c8f43a98a4fa0c46fbad12450"
   end
 
+  # pip 1.5.6 was the last version to support Python 3.1
   resource "pip" do
-    url "https://pypi.python.org/packages/source/p/pip/pip-7.1.2.tar.gz"
-    sha256 "ca047986f0528cfa975a14fb9f7f106271d4e0c3fe1ddced6c1db2e7ae57a477"
+    url "https://pypi.python.org/packages/source/p/pip/pip-1.5.6.tar.gz"
+    sha256 "b1a4ae66baf21b7eb05a5e4f37c50c2706fa28ea1f8780ce8efe14dcd9f1726c"
   end
 
   resource "wheel" do
