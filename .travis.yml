@@ -21,6 +21,7 @@ before_install:
     - brew tap drolando/deadsnakes
 
 install:
+    - brew install python26
     - brew install python27
     - brew install python31
     - brew install python32
@@ -28,6 +29,7 @@ install:
     - brew install python34
 
 script:
+    - brew test python26
     - brew test python27
     - brew test python31
     - brew test python32
