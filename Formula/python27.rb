@@ -321,8 +321,7 @@ class Python27 < Formula
     EOF
   end
 
-  def caveats
-    text = <<-EOS.undent
+  def caveats; <<-EOS.undent
       Pip and setuptools have been installed. To update them
         pip#{xy} install --upgrade pip setuptools
 
@@ -334,16 +333,6 @@ class Python27 < Formula
 
       See: https://github.com/Homebrew/homebrew/blob/master/share/doc/homebrew/Homebrew-and-Python.md
     EOS
-
-    # Tk warning only for 10.6
-    tk_caveats = <<-EOS.undent
-
-      Apple's Tcl/Tk is not recommended for use with Python on Mac OS X 10.6.
-      For more information see: http://www.python.org/download/mac/tcltk/
-    EOS
-
-    text += tk_caveats unless MacOS.version >= :lion
-    text
   end
 
   test do
@@ -351,7 +340,7 @@ class Python27 < Formula
     # and it can occur that building sqlite silently fails if OSX's sqlite is used.
     system "#{bin}/python#{xy}", "-c", "import sqlite3"
     # Check if some other modules import. Then the linked libs are working.
-    system "#{bin}/python#{xy}", "-c", "import tkinter; root = tkinter.Tk()"
+    system "#{bin}/python#{xy}", "-c", "import Tkinter; root = Tkinter.Tk()"
     system bin/"pip#{xy}", "list"
   end
 end
