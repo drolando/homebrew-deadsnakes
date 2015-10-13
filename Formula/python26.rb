@@ -167,6 +167,8 @@ class Python26 < Formula
     system "make", "frameworkinstallextras", "PYTHONAPPSDIR=#{share}/python2"
     system "make", "quicktest" if build.include? "quicktest"
 
+    mv share/man/man1/"python.1", share/man/man1/"python.2.6.1"
+
     # Any .app get a " 26" attached, so it does not conflict with python 2.x or any other
     # python 3.x version
     Dir.glob("#{prefix}/*.app") { |app| mv app, app.sub(".app", " 26.app") }
@@ -228,7 +230,7 @@ class Python26 < Formula
       end
     end
 
-    rm_rf [bin/"pip", bin/"easy_install"]
+    rm_rf [bin/"pip", bin/"pip2", bin/"easy_install"]
     mv bin/"wheel", bin/"wheel#{xy}"
 
     # post_install happens after link
