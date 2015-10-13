@@ -37,10 +37,12 @@ symlinked as `python`, `pip` or `wheel`. To use them you'll need to use their fu
 ``` bash
 $ python3.3 --version
 Python 3.3.6
+
 $ pip3.3 list
 pip (7.1.2)
 setuptools (18.3.2)
 wheel (0.26.0)
+
 $ wheel3.3 version
 wheel 0.26.0
 ```
@@ -48,13 +50,13 @@ wheel 0.26.0
 ## Supported Python Versions
 Currently supported releases:
 
-- 2.7  *(if you already have homebrew python installed you might see some errors during installation)*
+- 2.6
+- 2.7
 - 3.1
 - 3.2
 - 3.3
 - 3.4
 
-I'll be adding support for the remaining versions in the next days.
 ## Troubleshooting
 First, please run `brew update` and `brew doctor`.
 
