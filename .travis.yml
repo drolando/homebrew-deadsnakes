@@ -21,6 +21,11 @@ before_install:
     - brew tap drolando/deadsnakes
 
 install:
+    # Install homebrew Pythons to make sure we're
+    # not conflicting with them
+    - brew install python
+    - brew install python3
+
     - brew install python26
     - brew install python27
     - brew install python31
@@ -29,6 +34,11 @@ install:
     - brew install python34
 
 script:
+    # Test homebrew Pythons to make sure we're
+    # not conflicting with them
+    - brew test python
+    - brew test python3
+
     - brew test python26
     - brew test python27
     - brew test python31
