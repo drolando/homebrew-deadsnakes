@@ -167,7 +167,7 @@ class Python26 < Formula
     system "make", "frameworkinstallextras", "PYTHONAPPSDIR=#{share}/python2"
     system "make", "quicktest" if build.include? "quicktest"
 
-    mv share/man/man1/"python.1", share/man/man1/"python.2.6.1"
+    mv share/man/man1/"python.1", share/man/man1/"python.#{xy}.1"
 
     # Any .app get a " 26" attached, so it does not conflict with python 2.x or any other
     # python 3.x version

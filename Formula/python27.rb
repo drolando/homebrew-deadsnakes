@@ -173,6 +173,8 @@ class Python27 < Formula
     system "make", "frameworkinstallextras", "PYTHONAPPSDIR=#{share}/python"
     system "make", "quicktest" if build.include? "quicktest"
 
+    mv share/man/man1/"python.1", share/man/man1/"python.#{xy}.1"
+
     # Any .app get a " 34" attached, so it does not conflict with python 2.x or any other
     # python 3.x version
     Dir.glob("#{prefix}/*.app") { |app| mv app, app.sub(".app", " 34.app") }
@@ -234,8 +236,8 @@ class Python27 < Formula
       end
     end
 
-    rm_rf [bin/"pip", bin/"easy_install"]
-    mv bin/"wheel", bin/"wheel3.4"
+    rm_rf [bin/"pip", bin/"pip2", bin/"easy_install"]
+    mv bin/"wheel", bin/"wheel#{xy}"
 
     # post_install happens after link
     %W[pip#{xy} easy_install-#{xy} wheel#{xy}].each do |e|
