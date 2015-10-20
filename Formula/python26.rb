@@ -231,7 +231,7 @@ class Python26 < Formula
 
     %w[setuptools pip wheel].each do |pkg|
       (libexec/pkg).cd do
-        system bin/"python#{xy}", "-s", "setup.py", "--no-user-cfg", "install",
+        system bin/"python#{xy}", "-s", "setup.py", "install",
                "--force", "--verbose", "--install-scripts=#{bin}",
                "--install-lib=#{site_packages}",
                "--single-version-externally-managed",
