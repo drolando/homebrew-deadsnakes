@@ -149,12 +149,6 @@ class Python26 < Formula
       args << "--enable-universalsdk" << "--with-universal-archs=intel"
     end
 
-    # Allow sqlite3 module to load extensions:
-    # https://docs.python.org/library/sqlite3.html#f1
-    if build.with? "sqlite"
-      inreplace("setup.py", 'sqlite_defines.append(("SQLITE_OMIT_LOAD_EXTENSION", "1"))', "")
-    end
-
     # Allow python modules to use ctypes.find_library to find homebrew's stuff
     # even if homebrew is not a /usr/local/lib. Try this with:
     # `brew install enchant && pip install pyenchant`
@@ -316,7 +310,7 @@ class Python26 < Formula
           # site_packages; prefer the shorter paths
           long_prefix = re.compile(r'#{rack}/[0-9\._abrc]+/Frameworks/Python\.framework/Versions/#{xy}/lib/python#{xy}/site-packages')
           sys.path = [long_prefix.sub('#{site_packages}', p) for p in sys.path]
-          
+
           # LINKFORSHARED (and python-config --ldflags) return the
           # full path to the lib (yes, "Python" is actually the lib, not a
           # dir) so that third-party software does not need to add the
