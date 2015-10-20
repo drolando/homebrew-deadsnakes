@@ -214,7 +214,7 @@ class Python34 < Formula
     end
 
     rm_rf [bin/"pip", bin/"easy_install"]
-    mv bin/"wheel", bin/"wheel3.4"
+    mv bin/"wheel", bin/"wheel#{xy}"
 
     # post_install happens after link
     %W[pip#{xy} easy_install-#{xy} wheel#{xy}].each do |e|

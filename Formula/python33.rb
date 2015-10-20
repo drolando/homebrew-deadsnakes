@@ -205,7 +205,7 @@ class Python33 < Formula
 
     %w[setuptools pip wheel].each do |pkg|
       (libexec/pkg).cd do
-        system bin/"python3.3", "-s", "setup.py", "install",
+        system bin/"python#{xy}", "-s", "setup.py", "install",
                "--force", "--verbose", "--install-scripts=#{bin}",
                "--install-lib=#{site_packages}",
                "--single-version-externally-managed",
@@ -214,7 +214,7 @@ class Python33 < Formula
     end
 
     rm_rf [bin/"pip", bin/"easy_install"]
-    mv bin/"wheel", bin/"wheel3.3"
+    mv bin/"wheel", bin/"wheel#{xy}"
 
     # post_install happens after link
     %W[pip#{xy} easy_install-#{xy} wheel#{xy}].each do |e|
@@ -291,10 +291,10 @@ class Python33 < Formula
   def caveats
     text = <<-EOS.undent
       Pip and setuptools have been installed. To update them
-        pip3.3 install --upgrade pip setuptools
+        pip#{xy} install --upgrade pip setuptools
 
       You can install Python packages with
-        pip3.3 install <package>
+        pip#{xy} install <package>
 
       They will install into the site-package directory
         #{site_packages}

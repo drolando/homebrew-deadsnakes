@@ -6,9 +6,12 @@ class Python26 < Formula
 
   head "https://hg.python.org/cpython", :using => :hg, :branch => '2.6'
 
+  # Please don't add a wide/ucs4 option as it won't be accepted.
+  # More details in: https://github.com/Homebrew/homebrew/pull/32368
   option :universal
-  option "with-tcl-tk", "Use Homebrew's Tk instead of OS X Tk (has optional Cocoa and threads support)"
   option "with-quicktest", "Run `make quicktest` after the build"
+  option "with-tcl-tk", "Use Homebrew's Tk instead of OS X Tk (has optional Cocoa and threads support)"
+  option "with-poll", "Enable select.poll, which is not fully implemented on OS X (https://bugs.python.org/issue5154)"
 
   deprecated_option "quicktest" => "with-quicktest"
   deprecated_option "with-brewed-tk" => "with-tcl-tk"
@@ -20,6 +23,7 @@ class Python26 < Formula
   depends_on "openssl"
   depends_on "xz" => :recommended # for the lzma module added in 3.3
   depends_on "homebrew/dupes/tcl-tk" => :optional
+  depends_on "berkeley-db4" => :optional
   depends_on :x11 if build.with?("tcl-tk") && Tab.for_name("homebrew/dupes/tcl-tk").with?("x11")
 
   skip_clean "bin/pip", "bin/pip-2.6"
@@ -48,10 +52,8 @@ class Python26 < Formula
     sha256 "c075353337f9ff3ccf8091693d278782fcdff62c113245d8de43c5c7acc57daf"
   end
 
-  # Homebrew's tcl-tk is built in a standard unix fashion (due to link errors)
-  # n "xz" => :recommended # for the lzma module added in 3.3
-  # so we have to stop python from searching for frameworks and linking against
-  # X11.
+  # Patch to disable the search for Tk.framework, since Homebrew's Tk is
+  # a plain unix build. Remove `-lX11`, too because our Tk is "AquaTk".
   patch :DATA if build.with? "tcl-tk"
 
   def lib_cellar
@@ -87,6 +89,10 @@ class Python26 < Formula
   end
 
   def install
+    if build.with? "poll"
+      opoo "The given option --with-poll enables a somewhat broken poll() on OS X (https://bugs.python.org/issue5154)."
+    end
+
     # Unset these so that installing pip and setuptools puts them where we want
     # and not into some other Python the user has installed.
     ENV["PYTHONHOME"] = nil
@@ -109,13 +115,15 @@ class Python26 < Formula
       cflags = "CFLAGS=-isysroot #{MacOS.sdk_path}"
       ldflags = "LDFLAGS=-isysroot #{MacOS.sdk_path}"
       args << "CPPFLAGS=-I#{MacOS.sdk_path}/usr/include" # find zlib
+      # For the Xlib.h, Python needs this header dir with the system Tk
       if build.without? "tcl-tk"
         cflags += " -I#{MacOS.sdk_path}/System/Library/Frameworks/Tk.framework/Versions/8.5/Headers"
       end
       args << cflags
       args << ldflags
     end
-    # Avoid linking to libgcc http://code.activestate.com/lists/python-dev/112195/
+
+    # Avoid linking to libgcc https://code.activestate.com/lists/python-dev/112195/
     args << "MACOSX_DEPLOYMENT_TARGET=#{MacOS.version}"
 
     # We want our readline and openssl! This is just to outsmart the detection code,
@@ -124,6 +132,7 @@ class Python26 < Formula
       s.gsub! "do_readline = self.compiler.find_library_file(lib_dirs, 'readline')",
               "do_readline = '#{Formula["readline"].opt_lib}/libhistory.dylib'"
       s.gsub! "/usr/local/ssl", Formula["openssl"].opt_prefix
+      s.gsub! "/usr/include/db4", Formula["berkeley-db4"].opt_include
     end
 
 	inreplace "configure" do |s|
@@ -140,6 +149,12 @@ class Python26 < Formula
       args << "--enable-universalsdk" << "--with-universal-archs=intel"
     end
 
+    # Allow sqlite3 module to load extensions:
+    # https://docs.python.org/library/sqlite3.html#f1
+    if build.with? "sqlite"
+      inreplace("setup.py", 'sqlite_defines.append(("SQLITE_OMIT_LOAD_EXTENSION", "1"))', "")
+    end
+
     # Allow python modules to use ctypes.find_library to find homebrew's stuff
     # even if homebrew is not a /usr/local/lib. Try this with:
     # `brew install enchant && pip install pyenchant`
@@ -149,7 +164,7 @@ class Python26 < Formula
     end
 
     if build.with? "tcl-tk"
-      tcl_tk = Formula["tcl-tk"].opt_prefix
+      tcl_tk = Formula["homebrew/dupes/tcl-tk"].opt_prefix
       ENV.append "CPPFLAGS", "-I#{tcl_tk}/include"
       ENV.append "LDFLAGS", "-L#{tcl_tk}/lib"
     end
@@ -164,7 +179,7 @@ class Python26 < Formula
     # instead of `make install` since it only installs exec_prefix/bin/pythonversion
     system "make", "altinstall", "PYTHONAPPSDIR=#{prefix}"
     # Demos and Tools
-    system "make", "frameworkinstallextras", "PYTHONAPPSDIR=#{share}/python2"
+    system "make", "frameworkinstallextras", "PYTHONAPPSDIR=#{share}/python26"
     system "make", "quicktest" if build.include? "quicktest"
 
     mv share/man/man1/"python.1", share/man/man1/"python.#{xy}.1"
@@ -199,7 +214,7 @@ class Python26 < Formula
 
   def post_install
     # Fix up the site-packages so that user-installed Python software survives
-    # minor updates, such as going from 3.3.2 to 3.3.3:
+    # minor updates, such as going from 2.7.0 to 2.7.1:
 
     # Create a site-packages in HOMEBREW_PREFIX/lib/python#{xy}/site-packages
     site_packages.mkpath
@@ -222,7 +237,7 @@ class Python26 < Formula
 
     %w[setuptools pip wheel].each do |pkg|
       (libexec/pkg).cd do
-        system bin/"python#{xy}", "-s", "setup.py", "install",
+        system bin/"python#{xy}", "-s", "setup.py", "--no-user-cfg", "install",
                "--force", "--verbose", "--install-scripts=#{bin}",
                "--install-lib=#{site_packages}",
                "--single-version-externally-managed",
@@ -282,16 +297,18 @@ class Python26 < Formula
           # because the PYTHONPATH is evaluated after the sitecustomize.py. Many modules (e.g. PyQt4) are
           # built only for a specific version of Python and will fail with cryptic error messages.
           # In the end this means: Don't set the PYTHONPATH permanently if you use different Python versions.
-          exit('Your PYTHONPATH points to a site-packages dir for Python 3.x but you are running Python ' +
+          exit('Your PYTHONPATH points to a site-packages dir for Python 2.x but you are running Python ' +
                str(sys.version_info[0]) + '.x!\\n     PYTHONPATH is currently: "' + str(os.environ['PYTHONPATH']) + '"\\n' +
                '     You should `unset PYTHONPATH` to fix this.')
 
       # Only do this for a brewed python:
       if os.path.realpath(sys.executable).startswith('#{rack}'):
-          # Shuffle /Library site-packages to the end of sys.path
+          # Shuffle /Library site-packages to the end of sys.path and reject
+          # paths in /System pre-emptively (#14712)
           library_site = '/Library/Python/#{xy}/site-packages'
           library_packages = [p for p in sys.path if p.startswith(library_site)]
-          sys.path = [p for p in sys.path if not p.startswith(library_site)]
+          sys.path = [p for p in sys.path if not p.startswith(library_site) and
+                                             not p.startswith('/System')]
           # .pth files have already been processed so don't use addsitedir
           sys.path.extend(library_packages)
 
@@ -299,6 +316,16 @@ class Python26 < Formula
           # site_packages; prefer the shorter paths
           long_prefix = re.compile(r'#{rack}/[0-9\._abrc]+/Frameworks/Python\.framework/Versions/#{xy}/lib/python#{xy}/site-packages')
           sys.path = [long_prefix.sub('#{site_packages}', p) for p in sys.path]
+          
+          # LINKFORSHARED (and python-config --ldflags) return the
+          # full path to the lib (yes, "Python" is actually the lib, not a
+          # dir) so that third-party software does not need to add the
+          # -F/#{HOMEBREW_PREFIX}/Frameworks switch.
+          try:
+              from _sysconfigdata import build_time_vars
+              build_time_vars['LINKFORSHARED'] = '-u _PyMac_Error #{opt_prefix}/Frameworks/Python.framework/Versions/#{xy}/Python'
+          except:
+              pass  # remember: don't print here. Better to fail silently.
 
           # Set the sys.executable to use the opt_prefix
           sys.executable = '#{opt_bin}/python#{xy}'
@@ -317,13 +344,6 @@ class Python26 < Formula
         #{site_packages}
 
       See: https://github.com/Homebrew/homebrew/blob/master/share/doc/homebrew/Homebrew-and-Python.md
-    EOS
-
-    # Tk warning only for 10.6
-    tk_caveats = <<-EOS.undent
-
-      Apple's Tcl/Tk is not recommended for use with Python on Mac OS X 10.6.
-      For more information see: http://www.python.org/download/mac/tcltk/
     EOS
 
     text += tk_caveats unless MacOS.version >= :lion

@@ -9,7 +9,7 @@ class Python27 < Formula
   # Please don't add a wide/ucs4 option as it won't be accepted.
   # More details in: https://github.com/Homebrew/homebrew/pull/32368
   option :universal
-  option "with-quicktest", "Run `make quicktest` after the build (for devs; may fail)"
+  option "with-quicktest", "Run `make quicktest` after the build"
   option "with-tcl-tk", "Use Homebrew's Tk instead of OS X Tk (has optional Cocoa and threads support)"
   option "with-poll", "Enable select.poll, which is not fully implemented on OS X (https://bugs.python.org/issue5154)"
 
@@ -135,6 +135,15 @@ class Python27 < Formula
       s.gsub! "/usr/include/db4", Formula["berkeley-db4"].opt_include
     end
 
+	inreplace "configure" do |s|
+		s.gsub! 'LIBTOOL_CRUFT=$LIBTOOL_CRUFT" -lSystem -lSystemStubs -arch_only ${MACOSX_DEFAULT_ARCH}"',
+				'LIBTOOL_CRUFT=$LIBTOOL_CRUFT" -lSystem -arch_only ${MACOSX_DEFAULT_ARCH}"'
+	end
+
+    # Speed up creation of libpython.a, backported from Unladen Swallow:
+    # http://code.google.com/p/unladen-swallow/source/detail?r=856
+    inreplace "Makefile.pre.in", "$(AR) cr", "$(AR) cqS"
+
     if build.universal?
       ENV.universal_binary
       args << "--enable-universalsdk" << "--with-universal-archs=intel"
@@ -170,14 +179,14 @@ class Python27 < Formula
     # instead of `make install` since it only installs exec_prefix/bin/pythonversion
     system "make", "altinstall", "PYTHONAPPSDIR=#{prefix}"
     # Demos and Tools
-    system "make", "frameworkinstallextras", "PYTHONAPPSDIR=#{share}/python"
+    system "make", "frameworkinstallextras", "PYTHONAPPSDIR=#{share}/python27"
     system "make", "quicktest" if build.include? "quicktest"
 
     mv share/man/man1/"python.1", share/man/man1/"python.#{xy}.1"
 
-    # Any .app get a " 34" attached, so it does not conflict with python 2.x or any other
+    # Any .app get a " 27" attached, so it does not conflict with python 2.x or any other
     # python 3.x version
-    Dir.glob("#{prefix}/*.app") { |app| mv app, app.sub(".app", " 34.app") }
+    Dir.glob("#{prefix}/*.app") { |app| mv app, app.sub(".app", " 27.app") }
 
     # A fix, because python and python3 both want to install Python.framework
     # and therefore we can't link both into HOMEBREW_PREFIX/Frameworks
@@ -221,7 +230,7 @@ class Python27 < Formula
     # Remove old setuptools installations that may still fly around and be
     # listed in the easy_install.pth. This can break setuptools build with
     # zipimport.ZipImportError: bad local file header
-    # setuptools-0.9.5-py3.3.egg
+    # setuptools-0.9.8-py3.3.egg
     rm_rf Dir["#{site_packages}/setuptools*"]
     rm_rf Dir["#{site_packages}/distribute*"]
     rm_rf Dir["#{site_packages}/pip[-_.][0-9]*", "#{site_packages}/pip"]
@@ -305,7 +314,7 @@ class Python27 < Formula
 
           # the Cellar site-packages is a symlink to the HOMEBREW_PREFIX
           # site_packages; prefer the shorter paths
-          long_prefix = re.compile(r'#{rack}/[0-9\._abrc]+/Frameworks/Python\.framework/Versions/2\.7/lib/python2\.7/site-packages')
+          long_prefix = re.compile(r'#{rack}/[0-9\._abrc]+/Frameworks/Python\.framework/Versions/#{xy}/lib/python#{xy}/site-packages')
           sys.path = [long_prefix.sub('#{site_packages}', p) for p in sys.path]
 
           # LINKFORSHARED (and python-config --ldflags) return the
@@ -335,6 +344,9 @@ class Python27 < Formula
 
       See: https://github.com/Homebrew/homebrew/blob/master/share/doc/homebrew/Homebrew-and-Python.md
     EOS
+
+    text += tk_caveats unless MacOS.version >= :lion
+    text
   end
 
   test do
