@@ -20,12 +20,13 @@ $ brew install https://raw.githubusercontent.com/drolando/homebrew-deadsnakes/ma
 
 ## Usage
 
+To install python 3.4:
 ``` bash
 $ brew tap drolando/homebrew-deadsnakes
-$ brew install python31
-$ brew test python31
-$ python3.1
-Python 3.1.5 (default, Oct  7 2015, 23:34:12)
+$ brew install python34
+$ brew test python34
+$ python3.4
+Python 3.4.3 (default, Oct 20 2015, 22:36:21)
 [GCC 4.2.1 Compatible Apple LLVM 7.0.0 (clang-700.0.72)] on darwin
 Type "help", "copyright", "credits" or "license" for more information.
 >>>
