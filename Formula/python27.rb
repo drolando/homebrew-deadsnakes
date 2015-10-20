@@ -140,10 +140,6 @@ class Python27 < Formula
 				'LIBTOOL_CRUFT=$LIBTOOL_CRUFT" -lSystem -arch_only ${MACOSX_DEFAULT_ARCH}"'
 	end
 
-    # Speed up creation of libpython.a, backported from Unladen Swallow:
-    # http://code.google.com/p/unladen-swallow/source/detail?r=856
-    inreplace "Makefile.pre.in", "$(AR) cr", "$(AR) cqS"
-
     if build.universal?
       ENV.universal_binary
       args << "--enable-universalsdk" << "--with-universal-archs=intel"
