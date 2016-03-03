@@ -1,8 +1,8 @@
 class Python34 < Formula
   desc "Interpreted, interactive, object-oriented programming language"
   homepage "https://www.python.org/"
-  url "https://www.python.org/ftp/python/3.4.3/Python-3.4.3.tar.xz"
-  sha256 "b5b3963533768d5fc325a4d7a6bd6f666726002d696f1d399ec06b043ea996b8"
+  url "https://www.python.org/ftp/python/3.4.4/Python-3.4.4.tar.xz"
+  sha256 "a797d3820155ec6cb654a652b9acfb11792d4e7d568eef1f9199009e042b6ba2"
 
   head "https://hg.python.org/cpython", :using => :hg, :branch => '3.4'
 
@@ -26,8 +26,8 @@ class Python34 < Formula
   skip_clean "bin/easy_install3", "bin/easy_install-3.4"
 
   resource "setuptools" do
-    url "https://pypi.python.org/packages/source/s/setuptools/setuptools-18.3.2.tar.gz"
-    sha256 "8c4ab0c4f227730519dc1e020f875b3ef97e643c8f43a98a4fa0c46fbad12450"
+    url "https://pypi.python.org/packages/source/s/setuptools/setuptools-20.2.2.tar.gz"
+    sha256 "24fcfc15364a9fe09a220f37d2dcedc849795e3de3e4b393ee988e66a9cbd85a"
   end
 
   resource "pip" do
