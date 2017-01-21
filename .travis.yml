@@ -21,16 +21,20 @@ before_install:
     - brew tap drolando/deadsnakes
 
 install:
+    # Make sure python is installed
+    - brew list python || brew install python
     - brew install python26
-    - brew install python27
+    # Make sure python3 is installed
+    - brew list python3 || brew install python3
     - brew install python31
     - brew install python32
     - brew install python33
     - brew install python34
 
 script:
+    - brew test python
     - brew test python26
-    - brew test python27
+    - brew test python3
     - brew test python31
     - brew test python32
     - brew test python33

@@ -52,7 +52,6 @@ wheel 0.26.0
 Currently supported releases:
 
 - 2.6
-- 2.7
 - 3.1
 - 3.2
 - 3.3
