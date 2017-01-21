@@ -19,6 +19,13 @@ matrix:
 before_install:
     - brew update
     - brew tap drolando/deadsnakes
+    - >
+        if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then
+            pushd "$(brew config | grep HOMEBREW_REPOSITORY | awk '{print $2}')/Library/Taps/drolando/homebrew-deadsnakes";
+            git fetch origin +refs/pull/$TRAVIS_PULL_REQUEST/merge:;
+            git checkout -qf FETCH_HEAD;
+            popd;
+        fi
 
 install:
     # Make sure python is installed
