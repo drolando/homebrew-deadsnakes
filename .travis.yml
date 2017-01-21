@@ -32,9 +32,7 @@ install:
     - brew install python34
 
 script:
-    - brew test python
     - brew test python26
-    - brew test python3
     - brew test python31
     - brew test python32
     - brew test python33
