@@ -1,16 +1,8 @@
 class Python35 < Formula
   desc "Interpreted, interactive, object-oriented programming language"
   homepage "https://www.python.org/"
-  url "https://www.python.org/ftp/python/3.5.2/Python-3.5.2.tar.xz"
-  sha256 "0010f56100b9b74259ebcd5d4b295a32324b58b517403a10d1a2aa7cb22bca40"
-
-  # Patch for pyport.h macro issue
-  # https://bugs.python.org/issue10910
-  # https://trac.macports.org/ticket/44288
-  patch do
-    url "https://bugs.python.org/file30805/issue10910-workaround.txt"
-    sha256 "c075353337f9ff3ccf8091693d278782fcdff62c113245d8de43c5c7acc57daf"
-  end
+  url "https://www.python.org/ftp/python/3.5.4/Python-3.5.4.tar.xz"
+  sha256 "94d93bfabb3b109f8a10365a325f920f9ec98c6e2380bf228f9700a14054c84c"
 
   head "https://hg.python.org/cpython", :using => :hg, :branch => '3.5'
 
