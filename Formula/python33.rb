@@ -1,8 +1,8 @@
 class Python33 < Formula
   desc "Interpreted, interactive, object-oriented programming language"
   homepage "https://www.python.org/"
-  url "https://www.python.org/ftp/python/3.3.6/Python-3.3.6.tar.xz"
-  sha256 "5226e4bf7a530c3ff2bcde0c94e0e09e59a8bcde0114fe0268bc925bdabb5d3f"
+  url "https://www.python.org/ftp/python/3.3.7/Python-3.3.7.tar.xz"
+  sha256 "85f60c327501c36bc18c33370c14d472801e6af2f901dafbba056f61685429fe"
 
   head "https://hg.python.org/cpython", :using => :hg, :branch => '3.3'
 
