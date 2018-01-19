@@ -314,7 +314,7 @@ class Python26 < Formula
   end
 
   def caveats
-    text = <<-EOS.undent
+    text = <<~EOS
       Pip and setuptools have been installed. To update them
         pip#{xy} install --upgrade pip setuptools
 
