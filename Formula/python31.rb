@@ -275,7 +275,7 @@ class Python31 < Formula
   end
 
   def caveats
-    text = <<-EOS.undent
+    text = <<~EOS
       Pip and setuptools have been installed. To update them
         pip#{xy} install --upgrade pip setuptools
 
@@ -289,7 +289,7 @@ class Python31 < Formula
     EOS
 
     # Tk warning only for 10.6
-    tk_caveats = <<-EOS.undent
+    tk_caveats = <<~EOS
 
       Apple's Tcl/Tk is not recommended for use with Python on Mac OS X 10.6.
       For more information see: http://www.python.org/download/mac/tcltk/
