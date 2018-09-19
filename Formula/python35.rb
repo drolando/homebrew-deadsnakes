@@ -1,8 +1,8 @@
 class Python35 < Formula
   desc "Interpreted, interactive, object-oriented programming language"
   homepage "https://www.python.org/"
-  url "https://www.python.org/ftp/python/3.5.4/Python-3.5.4.tar.xz"
-  sha256 "94d93bfabb3b109f8a10365a325f920f9ec98c6e2380bf228f9700a14054c84c"
+  url "https://www.python.org/ftp/python/3.5.6/Python-3.5.6.tar.xz"
+  sha256 "f55cde04f521f273c7cba08912921cc5642cfc15ca7b22d5829f0aff4371155f"
 
   head "https://hg.python.org/cpython", :using => :hg, :branch => '3.5'
 
@@ -15,14 +15,13 @@ class Python35 < Formula
   deprecated_option "with-brewed-tk" => "with-tcl-tk"
 
   depends_on "pkg-config" => :build
-  depends_on "readline" => :recommended
-  depends_on "sqlite" => :recommended
-  depends_on "gdbm" => :recommended
-  depends_on "openssl"
-  depends_on "xz" => :recommended # for the lzma module added in 3.3
-  depends_on "homebrew/dupes/tcl-tk" => :optional
-  depends_on :x11 if build.with?("tcl-tk") && Tab.for_name("homebrew/dupes/tcl-tk").with?("x11")
   depends_on "sphinx-doc" => [:build, :optional]
+  depends_on "gdbm"
+  depends_on "openssl"
+  depends_on "readline"
+  depends_on "sqlite"
+  depends_on "xz"
+  depends_on "tcl-tk" => :optional
 
   skip_clean "bin/pip3", "bin/pip-3.5"
   skip_clean "bin/easy_install3", "bin/easy_install-3.5"
@@ -90,17 +89,19 @@ class Python35 < Formula
       --datarootdir=#{share}
       --datadir=#{share}
       --enable-framework=#{frameworks}
+      --enable-loadable-sqlite-extensions
       --without-ensurepip
+      --with-dtrace
+      --with-openssl=#{Formula["openssl"].opt_prefix}
     ]
 
     args << "--without-gcc" if ENV.compiler == :clang
-    args << "--enable-loadable-sqlite-extensions" if build.with?("sqlite")
 
     cflags   = []
     ldflags  = []
     cppflags = []
 
-    unless MacOS::CLT.installed?
+    if MacOS.sdk_path_if_needed
       # Help Python's build system (setuptools/pip) to build things on Xcode-only systems
       # The setup.py looks at "-isysroot" to get the sysroot (and not at --sysroot)
       cflags   << "-isysroot #{MacOS.sdk_path}"
@@ -116,23 +117,20 @@ class Python35 < Formula
 
     # We want our readline and openssl! This is just to outsmart the detection code,
     # superenv makes cc always find includes/libs!
+    inreplace "setup.py",
+      "do_readline = self.compiler.find_library_file(lib_dirs, 'readline')",
+      "do_readline = '#{Formula["readline"].opt_lib}/libhistory.dylib'"
+
     inreplace "setup.py" do |s|
-      s.gsub! "do_readline = self.compiler.find_library_file(lib_dirs, 'readline')",
-              "do_readline = '#{Formula["readline"].opt_lib}/libhistory.dylib'"
       s.gsub! "/usr/local/ssl", Formula["openssl"].opt_prefix
+      s.gsub! "sqlite_setup_debug = False", "sqlite_setup_debug = True"
+      s.gsub! "for d_ in inc_dirs + sqlite_inc_paths:",
+              "for d_ in ['#{Formula["sqlite"].opt_include}']:"
     end
 
     if build.universal?
       ENV.universal_binary
       args << "--enable-universalsdk" << "--with-universal-archs=intel"
-    end
-
-    if build.with? "sqlite"
-      inreplace "setup.py" do |s|
-        s.gsub! "sqlite_setup_debug = False", "sqlite_setup_debug = True"
-        s.gsub! "for d_ in inc_dirs + sqlite_inc_paths:",
-                "for d_ in ['#{Formula["sqlite"].opt_include}']:"
-      end
     end
 
     # Allow python modules to use ctypes.find_library to find homebrew's stuff
@@ -207,6 +205,8 @@ class Python35 < Formula
   end
 
   def post_install
+    ENV.delete "PYTHONPATH"
+
     # Fix up the site-packages so that user-installed Python software survives
     # minor updates, such as going from 3.3.2 to 3.3.3:
 
@@ -243,32 +243,31 @@ class Python35 < Formula
     mv bin/"wheel", bin/"wheel#{xy}"
 
     # post_install happens after link
-    %W[pip#{xy} pip#{xy} easy_install-#{xy} wheel#{xy}].each do |e|
+    %W[pip#{xy} easy_install-#{xy} wheel#{xy}].each do |e|
       (HOMEBREW_PREFIX/"bin").install_symlink bin/e
     end
 
     # Help distutils find brewed stuff when building extensions
-    include_dirs = [HOMEBREW_PREFIX/"include", Formula["openssl"].opt_include]
-    library_dirs = [HOMEBREW_PREFIX/"lib", Formula["openssl"].opt_lib]
-
-    if build.with? "sqlite"
-      include_dirs << Formula["sqlite"].opt_include
-      library_dirs << Formula["sqlite"].opt_lib
-    end
+    include_dirs = [HOMEBREW_PREFIX/"include", Formula["openssl"].opt_include,
+                    Formula["sqlite"].opt_include]
+    library_dirs = [HOMEBREW_PREFIX/"lib", Formula["openssl"].opt_lib,
+                    Formula["sqlite"].opt_lib]
 
     if build.with? "tcl-tk"
-      include_dirs << Formula["homebrew/dupes/tcl-tk"].opt_include
-      library_dirs << Formula["homebrew/dupes/tcl-tk"].opt_lib
+      include_dirs << Formula["tcl-tk"].opt_include
+      library_dirs << Formula["tcl-tk"].opt_lib
     end
 
     cfg = lib_cellar/"distutils/distutils.cfg"
-    cfg.atomic_write <<-EOF.undent
+
+    cfg.atomic_write <<~EOS
       [install]
       prefix=#{HOMEBREW_PREFIX}
 
       [build_ext]
       include_dirs=#{include_dirs.join ":"}
       library_dirs=#{library_dirs.join ":"}
+    EOS
     EOF
   end
 
