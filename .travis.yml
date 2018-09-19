@@ -19,20 +19,20 @@ before_install:
 
 install:
     # Make sure python is installed
-    - brew list python || brew install python
-    - brew install Formula/python26.rb
+    # - brew list python || brew install python
+    # - brew install Formula/python26.rb
     # Make sure python3 is installed
     - brew list python3 || brew install python3
-    - brew install Formula/python31.rb
-    - brew install Formula/python32.rb
-    - brew install Formula/python33.rb
-    - brew install Formula/python34.rb
+    # - brew install Formula/python31.rb
+    # - brew install Formula/python32.rb
+    # - brew install Formula/python33.rb
+    # - brew install Formula/python34.rb
     - brew install Formula/python35.rb
 
 script:
-    - brew test Formula/python26.rb
-    - brew test Formula/python31.rb
-    - brew test Formula/python32.rb
-    - brew test Formula/python33.rb
-    - brew test Formula/python34.rb
+    # - brew test Formula/python26.rb
+    # - brew test Formula/python31.rb
+    # - brew test Formula/python32.rb
+    # - brew test Formula/python33.rb
+    # - brew test Formula/python34.rb
     - brew test Formula/python35.rb
