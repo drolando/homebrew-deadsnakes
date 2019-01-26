@@ -24,6 +24,7 @@ install:
     - brew install Formula/python33.rb
     - brew install Formula/python34.rb
     - brew install Formula/python35.rb
+    - brew install Formula/python36.rb
 
 script:
     - brew test Formula/python26.rb
@@ -32,3 +33,4 @@ script:
     - brew test Formula/python33.rb
     - brew test Formula/python34.rb
     - brew test Formula/python35.rb
+    - brew test Formula/python36.rb
