@@ -6,8 +6,7 @@ The formula in the homebrew official repository
 only supports the latest version of Python 2 and Python 3, but people might still need to develop and test against 
 these old Python interpreters. 
 
-[![Build Status](https://travis-ci.org/drolando/homebrew-deadsnakes.svg)]
-(https://travis-ci.org/drolando/homebrew-deadsnakes)
+[![Build Status](https://travis-ci.org/drolando/homebrew-deadsnakes.svg?branch=master)](https://travis-ci.org/drolando/homebrew-deadsnakes)
 
 ## How do I install these formulae?
 Run `brew tap drolando/homebrew-deadsnakes` and then `brew install <formula>`
@@ -60,6 +59,5 @@ Currently supported releases:
 ## Troubleshooting
 First, please run `brew update` and `brew doctor`.
 
-Second, read the [Troubleshooting Checklist]
-(https://github.com/Homebrew/homebrew/blob/master/share/doc/homebrew/Troubleshooting.md#troubleshooting) 
+Second, read the [Troubleshooting Checklist](https://github.com/Homebrew/homebrew/blob/master/share/doc/homebrew/Troubleshooting.md#troubleshooting) 
 and then [open an issue](https://github.com/drolando/homebrew-deadsnakes/issues/new) in this tap.
