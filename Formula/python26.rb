@@ -22,9 +22,9 @@ class Python26 < Formula
   depends_on "gdbm" => :recommended
   depends_on "openssl"
   depends_on "xz" => :recommended # for the lzma module added in 3.3
-  depends_on "homebrew/dupes/tcl-tk" => :optional
+  depends_on "tcl-tk" => :optional
   depends_on "berkeley-db4" => :optional
-  depends_on :x11 if build.with?("tcl-tk") && Tab.for_name("homebrew/dupes/tcl-tk").with?("x11")
+  depends_on :x11 if build.with?("tcl-tk") && Tab.for_name("tcl-tk").with?("x11")
 
   skip_clean "bin/pip", "bin/pip-2.6"
   skip_clean "bin/easy_install", "bin/easy_install-2.6"
@@ -145,7 +145,7 @@ class Python26 < Formula
     end
 
     if build.with? "tcl-tk"
-      tcl_tk = Formula["homebrew/dupes/tcl-tk"].opt_prefix
+      tcl_tk = Formula["tcl-tk"].opt_prefix
       ENV.append "CPPFLAGS", "-I#{tcl_tk}/include"
       ENV.append "LDFLAGS", "-L#{tcl_tk}/lib"
     end
@@ -244,12 +244,12 @@ class Python26 < Formula
     end
 
     if build.with? "tcl-tk"
-      include_dirs << Formula["homebrew/dupes/tcl-tk"].opt_include
-      library_dirs << Formula["homebrew/dupes/tcl-tk"].opt_lib
+      include_dirs << Formula["tcl-tk"].opt_include
+      library_dirs << Formula["tcl-tk"].opt_lib
     end
 
     cfg = lib_cellar/"distutils/distutils.cfg"
-    cfg.atomic_write <<-EOF.undent
+    cfg.atomic_write <<~EOF
       [install]
       prefix=#{HOMEBREW_PREFIX}
 
@@ -264,7 +264,7 @@ class Python26 < Formula
   end
 
   def sitecustomize
-    <<-EOF.undent
+    <<~EOF
       # This file is created by Homebrew and is executed on each python startup.
       # Don't print from here, or else python command line scripts may fail!
       # <https://github.com/Homebrew/homebrew/blob/master/share/doc/homebrew/Homebrew-and-Python.md>
