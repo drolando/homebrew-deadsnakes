@@ -1,48 +1,38 @@
 # Force OS X.
 language: objective-c
+os: osx
+rvm: system
 
 matrix:
   include:
+    - env: OSX=10.14
+      osx_image: xcode10.1
+    - env: OSX=10.13
+      osx_image: xcode9.4
+    - env: OSX=10.12
+      osx_image: xcode9.2
     - env: OSX=10.11
-      os: osx
-      osx_image: osx10.11
-      rvm: system
-    - env: OSX=10.10
-      os: osx
-      osx_image: xcode7
-      rvm: system
-    - env: OSX=10.9
-      os: osx
-      osx_image: beta-xcode6.2
-      rvm: system
+      osx_image: xcode8
 
 before_install:
     - brew update
-    - brew tap drolando/deadsnakes
-    - >
-        if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then
-            pushd "$(brew config | grep HOMEBREW_REPOSITORY | awk '{print $2}')/Library/Taps/drolando/homebrew-deadsnakes";
-            git fetch origin +refs/pull/$TRAVIS_PULL_REQUEST/merge:;
-            git checkout -qf FETCH_HEAD;
-            popd;
-        fi
 
 install:
     # Make sure python is installed
     - brew list python || brew install python
-    - brew install python26
+    - brew install Formula/python26.rb
     # Make sure python3 is installed
     - brew list python3 || brew install python3
-    - brew install python31
-    - brew install python32
-    - brew install python33
-    - brew install python34
-    - brew install python35
+    - brew install Formula/python31.rb
+    - brew install Formula/python32.rb
+    - brew install Formula/python33.rb
+    - brew install Formula/python34.rb
+    - brew install Formula/python35.rb
 
 script:
-    - brew test python26
-    - brew test python31
-    - brew test python32
-    - brew test python33
-    - brew test python34
-    - brew test python35
+    - brew test Formula/python26.rb
+    - brew test Formula/python31.rb
+    - brew test Formula/python32.rb
+    - brew test Formula/python33.rb
+    - brew test Formula/python34.rb
+    - brew test Formula/python35.rb
