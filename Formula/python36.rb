@@ -15,13 +15,14 @@ class Python36 < Formula
   deprecated_option "with-brewed-tk" => "with-tcl-tk"
 
   depends_on "pkg-config" => :build
-  depends_on "sphinx-doc" => [:build, :optional]
-  depends_on "gdbm"
+  depends_on "readline" => :recommended
+  depends_on "sqlite" => :recommended
+  depends_on "gdbm" => :recommended
   depends_on "openssl"
-  depends_on "readline"
-  depends_on "sqlite"
-  depends_on "xz"
+  depends_on "xz" => :recommended # for the lzma module added in 3.3
   depends_on "tcl-tk" => :optional
+  depends_on :x11 if build.with?("tcl-tk") && Tab.for_name("tcl-tk").with?("x11")
+  depends_on "sphinx-doc" => [:build, :optional]
 
   skip_clean "bin/pip3", "bin/pip-3.6"
   skip_clean "bin/easy_install3", "bin/easy_install-3.6"
@@ -76,6 +77,8 @@ class Python36 < Formula
   end
 
   def install
+    ENV.permit_weak_imports
+
     # Unset these so that installing pip and setuptools puts them where we want
     # and not into some other Python the user has installed.
     ENV["PYTHONHOME"] = nil
@@ -87,28 +90,24 @@ class Python36 < Formula
       --datarootdir=#{share}
       --datadir=#{share}
       --enable-framework=#{frameworks}
-      --enable-loadable-sqlite-extensions
       --without-ensurepip
-      --with-dtrace
-      --with-openssl=#{Formula["openssl"].opt_prefix}
     ]
 
     args << "--without-gcc" if ENV.compiler == :clang
+    args << "--enable-loadable-sqlite-extensions" if build.with?("sqlite")
 
     cflags   = []
     ldflags  = []
     cppflags = []
 
-    if MacOS.sdk_path_if_needed
+    unless MacOS::CLT.installed?
       # Help Python's build system (setuptools/pip) to build things on Xcode-only systems
       # The setup.py looks at "-isysroot" to get the sysroot (and not at --sysroot)
       cflags   << "-isysroot #{MacOS.sdk_path}"
       ldflags  << "-isysroot #{MacOS.sdk_path}"
-      cppflags << "-I/usr/include" # find zlib
+      cppflags << "-I#{MacOS.sdk_path}/usr/include" # find zlib
       # For the Xlib.h, Python needs this header dir with the system Tk
       if build.without? "tcl-tk"
-        # Yep, this needs the absolute path where zlib needed
-        # # a path relative to the SDK.
         cflags << "-I#{MacOS.sdk_path}/System/Library/Frameworks/Tk.framework/Versions/8.5/Headers"
       end
     end
@@ -117,20 +116,23 @@ class Python36 < Formula
 
     # We want our readline and openssl! This is just to outsmart the detection code,
     # superenv makes cc always find includes/libs!
-    inreplace "setup.py",
-      "do_readline = self.compiler.find_library_file(lib_dirs, 'readline')",
-      "do_readline = '#{Formula["readline"].opt_lib}/libhistory.dylib'"
-
     inreplace "setup.py" do |s|
+      s.gsub! "do_readline = self.compiler.find_library_file(lib_dirs, 'readline')",
+              "do_readline = '#{Formula["readline"].opt_lib}/libhistory.dylib'"
       s.gsub! "/usr/local/ssl", Formula["openssl"].opt_prefix
-      s.gsub! "sqlite_setup_debug = False", "sqlite_setup_debug = True"
-      s.gsub! "for d_ in inc_dirs + sqlite_inc_paths:",
-              "for d_ in ['#{Formula["sqlite"].opt_include}']:"
     end
 
     if build.universal?
       ENV.universal_binary
       args << "--enable-universalsdk" << "--with-universal-archs=intel"
+    end
+
+    if build.with? "sqlite"
+      inreplace "setup.py" do |s|
+        s.gsub! "sqlite_setup_debug = False", "sqlite_setup_debug = True"
+        s.gsub! "for d_ in inc_dirs + sqlite_inc_paths:",
+                "for d_ in ['#{Formula["sqlite"].opt_include}']:"
+      end
     end
 
     # Allow python modules to use ctypes.find_library to find homebrew's stuff
@@ -152,8 +154,8 @@ class Python36 < Formula
     args << "CPPFLAGS=#{cppflags.join(" ")}" unless cppflags.empty?
 
     system "./configure", *args
-    system "make"
 
+    system "make"
     if build.with?("quicktest")
       system "make", "quicktest", "TESTPYTHONOPTS=-s", "TESTOPTS=-j#{ENV.make_jobs} -w"
     end
@@ -163,7 +165,7 @@ class Python36 < Formula
       # `make install` can overwrite or masquerade the python binary. `make altinstall` is therefore recommended
       # instead of `make install` since it only installs exec_prefix/bin/pythonversion
       system "make", "altinstall", "PYTHONAPPSDIR=#{prefix}"
-      system "make", "frameworkinstallextras", "PYTHONAPPSDIR=#{pkgshare}"
+      system "make", "frameworkinstallextras", "PYTHONAPPSDIR=#{share}/python3"
     end
 
     # Any .app get a " 3" attached, so it does not conflict with python 2.x.
@@ -180,11 +182,6 @@ class Python36 < Formula
               /^LINKFORSHARED=(.*)PYTHONFRAMEWORKDIR(.*)/,
               "LINKFORSHARED=\\1PYTHONFRAMEWORKINSTALLDIR\\2"
 
-    # Fix for https://github.com/Homebrew/homebrew-core/issues/21212
-    inreplace Dir[lib_cellar/"**/_sysconfigdata_m_darwin_darwin.py"],
-              %r{('LINKFORSHARED': .*?)'(Python.framework/Versions/3.\d+/Python)'}m,
-              "\\1'#{opt_prefix}/Frameworks/\\2'"
-
     # A fix, because python and python3 both want to install Python.framework
     # and therefore we can't link both into HOMEBREW_PREFIX/Frameworks
     # https://github.com/Homebrew/homebrew/issues/15943
@@ -193,6 +190,9 @@ class Python36 < Formula
 
     # Symlink the pkgconfig files into HOMEBREW_PREFIX so they're accessible.
     (lib/"pkgconfig").install_symlink Dir["#{frameworks}/Python.framework/Versions/#{xy}/lib/pkgconfig/*"]
+
+    # Remove the site-packages that Python created in its Cellar.
+    site_packages_cellar.rmtree
 
     %w[setuptools pip wheel].each do |r|
       (libexec/r).install resource(r)
@@ -207,10 +207,6 @@ class Python36 < Formula
   end
 
   def post_install
-    opoo "begin"
-    ENV.delete "PYTHONPATH"
-    opoo "after delete"
-
     # Fix up the site-packages so that user-installed Python software survives
     # minor updates, such as going from 3.3.2 to 3.3.3:
 
@@ -218,11 +214,7 @@ class Python36 < Formula
     site_packages.mkpath
 
     # Symlink the prefix site-packages into the cellar.
-    # unlink fails since the folder contains a README, so let's do rm rf instead.
-    if site_packages_cellar.exist?
-      rm_rf Dir["#{site_packages_cellar}"]
-    end
-    # site_packages_cellar.unlink if site_packages_cellar.exist?
+    site_packages_cellar.unlink if site_packages_cellar.exist?
     site_packages_cellar.parent.install_symlink site_packages
 
     # Write our sitecustomize.py
@@ -247,39 +239,36 @@ class Python36 < Formula
       end
     end
 
-    opoo "foo"
-
     rm_rf [bin/"pip", bin/"easy_install"]
     mv bin/"wheel", bin/"wheel#{xy}"
 
     # post_install happens after link
-    %W[pip#{xy} easy_install-#{xy} wheel#{xy}].each do |e|
+    %W[pip#{xy} pip#{xy} easy_install-#{xy} wheel#{xy}].each do |e|
       (HOMEBREW_PREFIX/"bin").install_symlink bin/e
     end
 
     # Help distutils find brewed stuff when building extensions
-    include_dirs = [HOMEBREW_PREFIX/"include", Formula["openssl"].opt_include,
-                    Formula["sqlite"].opt_include]
-    library_dirs = [HOMEBREW_PREFIX/"lib", Formula["openssl"].opt_lib,
-                    Formula["sqlite"].opt_lib]
+    include_dirs = [HOMEBREW_PREFIX/"include", Formula["openssl"].opt_include]
+    library_dirs = [HOMEBREW_PREFIX/"lib", Formula["openssl"].opt_lib]
+
+    if build.with? "sqlite"
+      include_dirs << Formula["sqlite"].opt_include
+      library_dirs << Formula["sqlite"].opt_lib
+    end
 
     if build.with? "tcl-tk"
       include_dirs << Formula["tcl-tk"].opt_include
       library_dirs << Formula["tcl-tk"].opt_lib
     end
 
-    opoo "barfoo"
-
     cfg = lib_cellar/"distutils/distutils.cfg"
-
-    cfg.atomic_write <<~EOS
+    cfg.atomic_write <<~EOF
       [install]
       prefix=#{HOMEBREW_PREFIX}
 
       [build_ext]
       include_dirs=#{include_dirs.join ":"}
       library_dirs=#{library_dirs.join ":"}
-    EOS
     EOF
   end
 
