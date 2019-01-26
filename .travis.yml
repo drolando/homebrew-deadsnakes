@@ -15,10 +15,12 @@ before_install:
 
 install:
     # Make sure python is installed
-    - brew list python || brew install python
+    - brew list python@2 || brew install python@2
+    - brew outdated python@2 || brew upgrade python@2
     - brew install Formula/python26.rb
     # Make sure python3 is installed
-    - brew list python3 || brew install python3
+    - brew list python || brew install python
+    - brew outdated python || brew upgrade python
     - brew install Formula/python31.rb
     - brew install Formula/python32.rb
     - brew install Formula/python33.rb
